@@ -1,99 +1,98 @@
-import { watch } from 'melanke-watchjs';
+import onChange from 'on-change';
 import _ from 'lodash';
+import i18next from 'i18next';
 
-const errorMessages = {
-  network: {
-    error: 'Network Problems',
-  },
+const buildChannelElement = (channel) => {
+  const titleEl = document.createElement('h2');
+  titleEl.classList.add('mt-4');
+  titleEl.textContent = channel.title;
+  const descriptionEl = document.createElement('p');
+  descriptionEl.textContent = channel.description;
+  return [titleEl, descriptionEl];
 };
 
-const renderErrors = (element, error) => {
-  const errorElement = element.nextElementSibling;
-  if (errorElement) {
-    element.classList.remove('is-invalid');
-    errorElement.remove();
-  }
-  if (!error) {
-    return;
-  }
-  const feedbackElement = document.createElement('div');
-  feedbackElement.classList.add('feedback', 'text-danger');
-  feedbackElement.innerHTML = error;
-  element.classList.add('is-invalid');
-  element.after(feedbackElement);
+const buildPostElement = (post) => {
+  const { itemTitle, itemLink } = post;
+  const div = document.createElement('div');
+  const postLink = document.createElement('a');
+  postLink.href = itemLink;
+  postLink.textContent = itemTitle;
+  div.append(postLink);
+  return div;
 };
 
-const renderFeed = (element, feedList) => {
-  const rssDiv = element;
-  rssDiv.innerHTML = '';
-  _.forEachRight(feedList, (feed) => {
-    const { feedTitle, feedDescription, feedItems } = feed;
-    const titleEl = document.createElement('h3');
-    titleEl.classList.add('mt-4');
-    titleEl.textContent = feedTitle;
-    const descriptionEl = document.createElement('p');
-    descriptionEl.textContent = feedDescription;
-    rssDiv.append(titleEl);
-    rssDiv.append(descriptionEl);
+export default (state, elements) => {
+  const renderFeedback = (type, error) => {
+    const oldFeedback = elements.input.nextElementSibling;
+    if (oldFeedback) {
+      oldFeedback.remove();
+    }
+    const newFeedback = document.createElement('div');
 
-    _.forEachRight(feedItems, (post) => {
-      const { title, link } = post;
-      const div = document.createElement('div');
-      const postLink = document.createElement('a');
-      postLink.href = link;
-      postLink.textContent = title;
-      div.append(postLink);
-      rssDiv.append(div);
-    });
-  });
-};
-
-export default (state) => {
-  const form = document.querySelector('form');
-  const rssFeed = document.querySelector('.rss-feed');
-  const submitButton = document.querySelector('button[type="submit"]');
-  /*
-  watch(state, 'valid', () => {
-    submitButton.disabled = !state.form.valid;
-  });
-  */
-  watch(state, 'errors', () => {
-    renderErrors(form, state.errors);
-  });
-
-  watch(state, 'processErrors', () => {
-    renderErrors(form, errorMessages.network.error);
-  });
-
-  watch(state, 'processState', () => {
-    const { processState } = state;
-    switch (processState) {
-      case 'failed':
-        submitButton.disabled = false;
-        renderErrors(form, state.processErrors);
+    switch (type) {
+      case 'error':
+        newFeedback.classList.add('feedback', 'text-danger');
+        newFeedback.textContent = error;
+        elements.input.classList.add('is-invalid');
+        elements.input.after(newFeedback);
         break;
-      case 'filling':
-        submitButton.disabled = false;
-        break;
-      case 'sending':
-        submitButton.disabled = true;
-        break;
-      case 'finished':
-        submitButton.disabled = false;
-        form.reset();
-        renderFeed(rssFeed, state.feedsList);
+      case 'success':
+        newFeedback.classList.add('feedback', 'text-success');
+        newFeedback.textContent = i18next.t('load.success');
+        elements.input.after(newFeedback);
         break;
       default:
-        throw new Error(`Unknown state: ${processState}`);
+        throw new Error(`Unknown feedback type: ${type}`);
+    }
+  };
+
+  const renderFeed = (watchedState) => {
+    const { feedsList, postsList } = watchedState;
+    const { feeds } = elements;
+    feeds.innerHTML = '';
+    _.forEachRight(feedsList, (channel) => {
+      const channelNodes = buildChannelElement(channel);
+      feeds.append(...channelNodes);
+      const channelsPosts = postsList.filter((post) => post.channelId === channel.id);
+      const postNodes = channelsPosts.map(buildPostElement);
+      feeds.append(...postNodes);
+    });
+  };
+
+  const processStateHandler = (processState) => {
+    switch (processState) {
+      case 'failed':
+        elements.submitButton.removeAttribute('disabled');
+        elements.input.removeAttribute('disabled');
+        renderFeedback('error', state.error);
+        break;
+      case 'sending':
+        elements.input.classList.remove('is-invalid');
+        elements.submitButton.setAttribute('disabled', true);
+        elements.input.setAttribute('disabled', true);
+        break;
+      case 'finished':
+        elements.submitButton.removeAttribute('disabled');
+        elements.input.removeAttribute('disabled');
+        elements.input.value = '';
+        renderFeedback('success');
+        break;
+      default:
+        throw new Error(`Unknown process state: ${processState}`);
+    }
+  };
+
+  const mapping = {
+    processState: () => processStateHandler(state.processState),
+    postsList: () => renderFeed(state),
+    form: () => renderFeedback('error', state.form.error),
+  };
+
+  const watchedState = onChange(state, (path, value) => {
+    console.log(path, value);
+    if (mapping[path]) {
+      mapping[path]();
     }
   });
-  /*
-    if (state.form.processState === 'sending') {
-      // disable submit button
-    }
-    if (state.form.processState === 'finished') {
-      form.reset()
-      submit.disabled = false;
-    }
-    */
+  return watchedState;
 };
