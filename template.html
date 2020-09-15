@@ -2,23 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
     <title>RSS Reader</title>
   </head>
-  <body>
-    <div class="container mt-5">
-      <div class="jumbotron">
-        <h1>RSS Reader</h1>
-        <div class="text-muted">http://lorem-rss.herokuapp.com/feed</div>
-        <p class="text-muted">https://www.sports.ru/rss/main.xml</p>
-        <form action class="form-inline">
-          <div class="form-group">
-            <input type="text" required="" name="url" class="form-control" placeholder="rss link">
-            <button type="submit" class="btn btn-primary ml-1">Add</button>
+  <body class="d-flex flex-column min-vh-100">
+    <main class="flex-grow-1">
+      <section class="jumbotron jumbotron-fluid bg-dark">
+        <div class="container-xl">
+          <div class="row">
+            <div class="col-md-10 col-lg-8 mx-auto text-white">
+              <h1 class="display-3">RSS Reader</h1>
+              <p class="text-muted my-0">Examples:</p>
+              <p class="text-muted my-0">http://lorem-rss.herokuapp.com/feed?unit=second&interval=10</p>
+              <p class="text-muted mt-0 mb-2">http://lorem-rss.herokuapp.com/feed?unit=second&interval=30</p>
+              <form action="" class="rss-form">
+                <div class="form-row">
+                  <div class="col">
+                    <input autofocus="" required="" name="url" aria-label="url" class="form-control form-control-lg w-100" placeholder="RSS link">
+                  </div>
+                  <div class="col-auto">
+                    <button type="submit" aria-label="add" class="btn btn-lg btn-primary px-sm-5">Add</button>
+                  </div>
+                </div>
+              </form>
+              <div class="feedback">
+            </div>
           </div>
-        </form>
+        </div>
       </div>
-      <div class="col-6 rss-feed"></div>
+    </section>
+    <div class="container-xl">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 mx-auto feeds">
+        </div>
+      </div>
     </div>
+    </main>
   </body>
 </html>
