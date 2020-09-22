@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: "error" */
+
 import onChange from 'on-change';
 import _ from 'lodash';
 import i18next from 'i18next';

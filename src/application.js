@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: "error" */
+
 import * as yup from 'yup';
 import axios from 'axios';
 import i18next from 'i18next';
@@ -5,9 +7,7 @@ import _ from 'lodash';
 import resources from './locales/index.js';
 import watch from './view';
 
-const routes = {
-  corsUrl: (url) => `https://cors-anywhere.herokuapp.com/${url}`,
-};
+const addProxy = (url) => `https://cors-anywhere.herokuapp.com/${url}`;
 
 const requestTimeout = 5000;
 
@@ -44,7 +44,7 @@ const parseRss = (xmlData) => {
 
 const getRss = (watchedState, url) => {
   watchedState.processState = 'sending';
-  return axios.get(routes.corsUrl(url))
+  return axios.get(addProxy(url))
     .then((response) => {
       const data = parseRss(response.data);
       const feed = {
@@ -64,7 +64,7 @@ const getRss = (watchedState, url) => {
 };
 
 const checkFeedUpdate = (watchedState) => {
-  const promises = watchedState.feedsList.map((feed) => axios.get(routes.corsUrl(feed.url))
+  const promises = watchedState.feedsList.map((feed) => axios.get(addProxy(feed.url))
     .then((response) => {
       const data = parseRss(response.data);
       const feedItems = data.feedItems
@@ -106,6 +106,9 @@ export default () => {
     lng: 'en',
     debug: true,
     resources,
+  }).catch((err) => {
+    console.log(err);
+    throw err;
   });
 
   const watchedState = watch(state, elements);
