@@ -61,12 +61,11 @@ export default (state, elements) => {
     });
   };
 
-  const processStateHandler = (processState) => {
-    switch (processState) {
+  const processStateHandler = (watchedState) => {
+    switch (watchedState.processState) {
       case 'failed':
         elements.submitButton.removeAttribute('disabled');
         elements.input.removeAttribute('disabled');
-        renderFeedback('error', state.error);
         break;
       case 'sending':
         elements.input.classList.remove('is-invalid');
@@ -80,14 +79,15 @@ export default (state, elements) => {
         renderFeedback('success');
         break;
       default:
-        throw new Error(`Unknown process state: ${processState}`);
+        throw new Error(`Unknown process state: ${watchedState.processState}`);
     }
   };
 
   const mapping = {
-    processState: () => processStateHandler(state.processState),
+    processState: () => processStateHandler(state),
     postsList: () => renderFeed(state),
     form: () => renderFeedback('error', state.form.error),
+    error: () => renderFeedback('error', state.error),
   };
 
   const watchedState = onChange(state, (path, value) => {

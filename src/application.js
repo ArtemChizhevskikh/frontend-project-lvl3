@@ -43,6 +43,7 @@ const parseRss = (xmlData) => {
 };
 
 const getRss = (watchedState, url) => {
+  watchedState.error = null;
   watchedState.processState = 'sending';
   return axios.get(addProxy(url))
     .then((response) => {
@@ -58,7 +59,7 @@ const getRss = (watchedState, url) => {
     })
     .catch((err) => {
       watchedState.processState = 'failed';
-      watchedState.error = err;
+      watchedState.error = err.message;
       throw err;
     });
 };
@@ -78,7 +79,7 @@ const checkFeedUpdate = (watchedState) => {
       watchedState.postsList.unshift(...newPosts);
     }));
 
-  Promise.all(promises).finally(() => {
+  return Promise.all(promises).finally(() => {
     setTimeout(() => checkFeedUpdate(watchedState), requestTimeout);
   });
 };
@@ -102,34 +103,34 @@ export default () => {
     },
   };
 
-  i18next.init({
+  return i18next.init({
     lng: 'en',
     debug: true,
     resources,
+  }).then(() => {
+    const watchedState = watch(state, elements);
+
+    elements.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const url = formData.get('url');
+      const error = validateUrl(url, watchedState.feedsList);
+      if (error) {
+        watchedState.form = {
+          valid: false,
+          error,
+        };
+        return;
+      }
+      watchedState.form = {
+        error: null,
+        valid: true,
+      };
+      getRss(watchedState, url);
+    });
+    setTimeout(() => checkFeedUpdate(watchedState), requestTimeout);
   }).catch((err) => {
     console.log(err);
     throw err;
   });
-
-  const watchedState = watch(state, elements);
-
-  elements.form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const url = formData.get('url');
-    const error = validateUrl(url, watchedState.feedsList);
-    if (error) {
-      watchedState.form = {
-        valid: false,
-        error,
-      };
-      return;
-    }
-    watchedState.form = {
-      error: null,
-      valid: true,
-    };
-    getRss(watchedState, url);
-  });
-  setTimeout(() => checkFeedUpdate(watchedState), requestTimeout);
 };
