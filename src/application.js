@@ -129,8 +129,5 @@ export default () => {
       getRss(watchedState, url);
     });
     setTimeout(() => checkFeedUpdate(watchedState), requestTimeout);
-  }).catch((err) => {
-    console.log(err);
-    throw err;
   });
 };
