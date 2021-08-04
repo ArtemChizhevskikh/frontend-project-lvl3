@@ -7,7 +7,7 @@ import _ from 'lodash';
 import resources from './locales/index.js';
 import watch from './view';
 
-const addProxy = (url) => `https://cors-anywhere.herokuapp.com/${url}`;
+const addProxy = (url) => `https://hexlet-allorigins.herokuapp.com/raw?disableCache=true&url=${encodeURIComponent(url)}`;
 
 const requestTimeout = 5000;
 
